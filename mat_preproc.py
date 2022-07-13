@@ -79,7 +79,7 @@ class preproc:
         
         return np.array(pos_idx, dtype=object), np.array(neg_idx, dtype=object)
 
-    def filter_index(self, source_label: int, resp_label: int):
+    def filter_index_single_class(self, source_label: int, resp_label: int):
         """
         Variant of the above's filter_index. This method get out the indices of a 
         specific class (single class indexer)
@@ -200,3 +200,48 @@ class preproc:
             # record their subject id
             subject = np.append(subject, np.repeat(subject_num, pos_len + neg_len))
         return X, y, subject
+
+    def get_data_by_index_single_class(self, idx):
+        """
+        Variant of the aboves get_data_by_index, but with single class idx
+        given an index array, indexing out the
+        given data matrices and flattern them out
+
+        This will excluding the subject with
+            10 or less trials on each class.
+        
+        Parameters:
+        -----------
+        idx : np.ndarray
+            the nested boolean array that indicates the position of the
+             desire class
+        
+        Returns:
+        --------
+        X : np.ndarray
+            the input for the formatted flattern data
+        y : np.ndarray
+            the ground truth label
+        """
+
+        X, y = np.array([]), np.array([])
+        
+        for subject_num, zipped in enumerate(zip(idx, self.behav_feat)):
+            index, behavior_feature = zipped
+            # the num of pos and neg class is their count of True
+            # in the boolean array
+            class_len = index.sum()
+
+            if class_len < 10:
+                # if this subject has less that 10 trails on 
+                # each class of interests
+                continue
+            
+            # get class
+            try: 
+                X = np.vstack([X, behavior_feature[index, :]])
+            except ValueError:
+                # catch the first case where the X is empty
+                X = behavior_feature[index, :]
+            y = np.append(y, np.repeat(1, class_len))
+        return X, y
