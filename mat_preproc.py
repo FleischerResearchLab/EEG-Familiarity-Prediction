@@ -26,6 +26,20 @@ class preproc:
         self.behav_feat = data[f'user_feat_{experiment_num}'][0]
         
         self.data = data
+
+        subjects = []
+
+        # use tr_order to label with participant with an identifier
+        for subject, tr in enumerate(self.tr_order):
+            subjects.append(np.repeat(subject, len(tr)))
+
+        self.subject = np.concatenate(subjects)
+
+        # keep track of the subject that we kept out because they did not
+        # meet certain criteria. In this case, is the participant with less
+        # than 10 observation on the pos or neg class.
+        self.left_out_subject = []
+
     
     def filter_index(self, pos_source_label: int, pos_resp_label: int,
                            neg_source_label: int, neg_resp_label: int):
@@ -79,7 +93,7 @@ class preproc:
         
         return np.array(pos_idx, dtype=object), np.array(neg_idx, dtype=object)
 
-    def filter_index_single_class(self, source_label: int, resp_label: int):
+    def filter_index_single_class(self, source_label: int, resp_label: int, include_left_out=True):
         """
         Variant of the above's filter_index. This method get out the indices of a 
         specific class (single class indexer)
@@ -91,6 +105,8 @@ class preproc:
             for details, please refer to the above encodings
         resp_label : int
             response label
+        left_out : Boolean
+            Whether we are indexing participant that were left out.
 
         Returns:
         --------
@@ -100,9 +116,15 @@ class preproc:
         """
         idx = []
         
+        subject_num = -1
+
         for source, response, behavior_feature in zip(
             self.source_label, self.resp_label, self.behav_feat
         ):
+            subject_num += 1
+            if (not include_left_out and subject_num in self.left_out_subject):
+                # leave out the kept out subject
+                continue
             # use the logical intersection to subtract out the indices 
             # of the positive and negative class
             index_single_subject = (
@@ -112,7 +134,7 @@ class preproc:
             # aggregate back
             idx.append(index_single_subject)
         
-        return np.array(idx, dtype=object)
+        return np.concatenate(idx)
 
     
     def merge_two_class(self, pos1, neg1, pos2, neg2):
@@ -182,7 +204,9 @@ class preproc:
 
             if pos_len < 10 or neg_len < 10:
                 # if this subject has less that 10 trails on 
-                # each class of interests
+                # each class of interests.
+                # record the left out subject
+                self.left_out_subject.append(subject_num)
                 continue
             
             # append positive class
@@ -245,3 +269,29 @@ class preproc:
                 X = behavior_feature[index, :]
             y = np.append(y, np.repeat(1, class_len))
         return X, y
+
+
+    def get_data_by_participant(self, participant):
+        """
+        Given a participant's identifier (generated in the constructor),
+        index out the X for that corresponding participant.
+
+        Parameters:
+        -----------
+        participant : int
+            id of the participant
+        
+        Returns:
+        --------
+        X : np.ndarray
+            the input for the formatted flattern data
+
+        Note:
+        -----
+        y is omitted in this multiclass settings.
+        """
+        # should match when accessing the same index
+        return self.behav_feat[participant]
+
+
+
