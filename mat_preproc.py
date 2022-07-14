@@ -8,22 +8,22 @@ class preproc:
     source_info = ["SC", "CR", "SI", "M", "FA"]
     response_info = ["RS", "RO", "F", "MN", "SN"]
     
-    def __init__(self, file_path):
+    def __init__(self, file_path, experiment_num):
         
         data = scipy.io.loadmat(file_path)
         # user trail order
-        self.tr_order = data['user_tr_order_1'][0]
+        self.tr_order = data[f'user_tr_order_{experiment_num}'][0]
 
         # projection scores
-        self.proj_score = data['user_prob_1'][0]
+        self.proj_score = data[f'user_prob_{experiment_num}'][0]
 
         # source and response label
-        self.source_label = data['user_source_1'][0]
-        self.resp_label = data['user_resp_1'][0]
+        self.source_label = data[f'user_source_{experiment_num}'][0]
+        self.resp_label = data[f'user_resp_{experiment_num}'][0]
 
         # features, group the channels and average over the windows,
         # those are called features, and we use the features for training
-        self.behav_feat = data['user_feat_1'][0]
+        self.behav_feat = data[f'user_feat_{experiment_num}'][0]
         
         self.data = data
     
