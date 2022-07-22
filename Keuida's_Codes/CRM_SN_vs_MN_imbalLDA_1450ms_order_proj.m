@@ -44,6 +44,8 @@ for user = [1:length(user_vector)]
     temp_labels = [ones(length(ALLDATA(user).SC.resp),1);2*ones(length(ALLDATA(user).CR.resp),1);3*ones(length(ALLDATA(user).SI.resp),1); ...
         4*ones(length(ALLDATA(user).IR.resp),1);5*ones(length(ALLDATA(user).FA.resp),1)];
 
+
+    % select trails for training data.
     temp_resp = [ALLDATA(user).SC.resp;ALLDATA(user).CR.resp;ALLDATA(user).SI.resp;ALLDATA(user).IR.resp;ALLDATA(user).FA.resp];
 
     [ temp MERGEDATA ] = preprocess_by_trial( MERGEDATA, 0, [.2], [], 40, [], [-.2 2.0]);
@@ -59,6 +61,8 @@ for user = [1:length(user_vector)]
     extra_index = si_index;
 
     if(~isempty(sc_index))
+      % pos class
+      % NEW neg class
       OLD(user) = pop_select(prep_ALL, 'trial', sc_index, 'sorttrial', 'off');
     else
       OLD(user).data = [];
@@ -134,7 +138,7 @@ for pick = 1:length(NEW)
     [test_set] = erp_feature(test_x,win_size);
     [~, ~, n_trials_test] = size(test_set);
     test_set = reshape(test_set, [n_bin*n_ch n_trials_test])';
-    
+    % train the LDA first,
     [acc, final_pred_2, output_prob, output_proj, W, train_set] = lda_study_prob(train_set, test_set, train_y, test_y, 1, 3);
 %         [ acc final_pred_2 output_prob prob_out_pat W train_set] =  erp_feature_prob(train_x, test_x, train_y, test_y, 25, 5);    
     my_prob{pick} = output_proj(1:end-1,1);
@@ -144,6 +148,7 @@ for pick = 1:length(NEW)
     trainsub_set = [];
     trainsub_num = [];
     for i = [1:pick-1 pick+1:length(NEW)]
+      % EXTRA, everything else than pos and neg
       temp_x = [];
       if(~isempty(OLD(i).data))
         temp_x = cat(3,temp_x, OLD(i).data(:, time_period, :));
@@ -161,7 +166,9 @@ for pick = 1:length(NEW)
     end
     trainsub_y = [ones(length(trainsub_set)-1,1);0];
     
+    % subject
     [acc, final_pred_2, output_prob, output_proj, W, train_set] = lda_study_prob(train_set, trainsub_set, train_y, trainsub_y, 1, 3);
+    % projection on the test subject
 %         [ acc final_pred_2 output_prob prob_out_pat W train_set] =  erp_feature_prob(train_x, test_x, train_y, test_y, 25, 5);    
     
     trainsub_prob = cell(1,length(NEW));
