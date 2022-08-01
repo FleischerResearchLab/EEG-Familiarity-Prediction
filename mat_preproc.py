@@ -168,7 +168,7 @@ class preproc:
             neg_idx.append((n1 | n2))
         return np.array(pos_idx, dtype=object), np.array(neg_idx, dtype=object)
     
-    def get_data_by_index(self, pos_idx, neg_idx):
+    def get_data_by_index(self, pos_idx, neg_idx, eliminate_trails=True):
         """
         given positive and negative index array, indexing out the
         given data matrices and flattern them out
@@ -184,6 +184,9 @@ class preproc:
         neg_idx : np.ndarray
             the nested boolean array that indicates the position of the
             negative class
+        eliminate_trails : boolean
+            whether we choose to leave out the participant with ten or less
+            class label
         
         Returns:
         --------
@@ -201,8 +204,8 @@ class preproc:
             # the num of pos and neg class is their count of True
             # in the boolean array
             pos_len, neg_len = pos.sum(), neg.sum()
-
-            if pos_len < 10 or neg_len < 10:
+            
+            if eliminate_trails and (pos_len < 10 or neg_len < 10):
                 # if this subject has less that 10 trails on 
                 # each class of interests.
                 # record the left out subject
