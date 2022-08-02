@@ -295,6 +295,8 @@ class preproc:
         """
         # should match when accessing the same index
         return self.behav_feat[participant]
+    
+    
     def generate_projections(self, clf, pos_idx, neg_idx, X, y, subject):
         """
         A function used to generate the projections based on the classifier
