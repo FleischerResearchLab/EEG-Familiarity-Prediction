@@ -295,6 +295,74 @@ class preproc:
         """
         # should match when accessing the same index
         return self.behav_feat[participant]
+        def generate_projections(self, clf, pos_idx, neg_idx, X, y, subject):
+        """
+        A function used to generate the projections based on the classifier
+        and according to different positive and negative classes. 
+        
+    
+        Parameters:
+        -----------
+        clf : LinearDiscriminantAnalysis
+            the LDA classfier that is used to train the model
+        pos_idx : np.ndarray
+            the indecies for the positive classes on the projection graph
+        neg_idx : np.ndarray
+            the indecies for the negative classes on the projection graph
+        X : np.ndarray
+            the features of the dataset
+        y : np.ndaaray
+            the labels of the dataset
+        subject : np.ndarray
+            the subject index array
+
+        Outputs:
+        --------
+        A projection graph that projct the whole data of one complete participant (the participant is determined by LOSO)
+        """
+        # the x-axis on the projection graph
+        x_axis = [(1, 1), (3, 1), (5, 1), (1, 2), (5, 2), (1, 3), (3, 3), (5, 3), (4, 4), (2, 4), (4, 5), (2, 5)]
+        projections = []
+
+        logo = LeaveOneGroupOut()
+        curr = 0
+        for train_idx, test_idx in logo.split(X, y, subject):
+            # select out the id of the participant that we left out
+            participant = int(subject[curr])
+            curr += len(test_idx)
+            # this LOSO follows the sequence of ppl presented in subject
+            X_train, X_test, y_train, y_test = X[train_idx], X[test_idx], y[train_idx], y[test_idx]
+            clf.fit(X_train, y_train)
+            # project the whole data of this complete participant
+            X_subject = self.get_data_by_participant(participant)
+            projection = clf.transform(X_subject)
+            projections.append(projection)
+        projections = np.concatenate(projections)
+        ## Projection 
+        x_name = np.array([f"{self.source_info[s-1]}-{self.response_info[r-1]}" for s, r in x_axis])
+
+        summary_stats = []
+
+        for source, response in x_axis:
+            idx = self.filter_index_single_class(source, response, include_left_out=False)
+            proj = projections[idx]
+            mean = proj.mean()
+            std = proj.std()/ np.sqrt(len(proj)) * 1.96
+            summary_stats.append((mean, std))
+
+        summary_stats = np.array(summary_stats)
+
+        plt.errorbar(x_name, summary_stats[:,0], yerr = summary_stats[:,1],
+                     fmt='o', capsize=3, c = 'black')
+        # pos
+        plt.errorbar(x_name[pos_idx], summary_stats[pos_idx,0],
+                     yerr = summary_stats[pos_idx,1] , fmt='o', capsize=3, c = 'lime', label="neg class")
+        # neg
+        plt.errorbar(x_name[neg_idx], summary_stats[neg_idx,0],
+                     yerr = summary_stats[neg_idx,1] , fmt='o', capsize=3, c = 'red', label="pos class")
+
+        _ = plt.xticks(rotation=45)
+        plt.legend()
 
 
 
