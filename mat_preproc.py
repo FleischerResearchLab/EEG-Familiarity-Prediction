@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 # wrapper class for data preprocessing
 class preproc:
+    """
+    Preprocessing package that preprocess the
+    given the features in multi class settings,
+    get out the desire class.
+    """
     
     # class attributes
     source_info = ["SC", "CR", "SI", "M", "FA"]

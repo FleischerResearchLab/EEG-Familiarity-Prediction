@@ -1,7 +1,8 @@
-function acc = LDA_simplest_test(clf, exp)
+function [acc, W, bias] = LDA_simplest_test(clf, exp)
 
 addpath('/Users/scottyang/Desktop/EEG/MemoryFinale/LOSO/Exp1')
 
+% use several conditions to specified the desired experiments and classifier.
 if exp == 1
 
     load 'data_imbalLDA_1.mat'
@@ -12,6 +13,7 @@ if exp == 1
     behav_feat = user_feat_1;
     
     if clf == "SN_vs_MN"
+        % iteratively aggregate user's data to form the huge trainning set
         for user = 1:length(proj_score)
             train_SNMN_cm = cell(1,2);
             pos1_idx = source_label{user} == 2 & resp_label{user}==5;
@@ -106,8 +108,11 @@ end
 disp("The shape of the training set is")
 disp(size(train_set))
 
-[acc, final_pred2, output_prob, output_proj, W, train_set] = lda_study_prob(train_set, train_set, train_y, train_y, 2, 3);
+[acc, ~, ~, ~, W, ~, ~, bias] = lda_study_prob(train_set, train_set, train_y, train_y, 1, 3);
+
+
 
 out_msg = strcat("the accuracy for experiment " + exp + " " + clf + " is: " + acc);
 
 disp(out_msg)
+end
